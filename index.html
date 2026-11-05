@@ -13,9 +13,9 @@ header{display:flex;justify-content:space-between;align-items:center;padding:18p
 .secao{padding:42px 22px}.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{background:#fff;border:1px solid #eadfd8;border-radius:18px;padding:20px}.foto{font-size:3rem}
 .linha,.item{display:flex;justify-content:space-between;align-items:center;gap:10px}.painel{display:grid;grid-template-columns:1fr 1.15fr;gap:30px;background:#fff;border:1px solid #eadfd8;border-radius:22px}
 form{display:grid;gap:14px}label{font-weight:700;display:grid;gap:6px}input,textarea{padding:11px;border:1px solid #d8c7bf;border-radius:10px;font:inherit}
-.resumo{background:#fff7f5;border:1px solid #ecd4dc;border-radius:12px;padding:14px}.msg{font-weight:700;min-height:24px}.etapas{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.etapa{padding:8px 12px;border-radius:999px;background:#f0e7eb}.etapa.ativa{background:#8b4a62;color:#fff}
+.resumo{background:#fff7f5;border:1px solid #ecd4dc;border-radius:12px;padding:14px}.msg{font-weight:700;min-height:24px;padding:10px;border-radius:10px}.msg:empty{padding:0}.msg.ok{background:#eef8f0;color:#245c2f}.msg.erro{background:#fff0ed;color:#8a2d1f}.etapas{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.etapa{padding:8px 12px;border-radius:999px;background:#f0e7eb}.etapa.ativa{background:#8b4a62;color:#fff}.confirmacao{margin-top:12px;padding:14px;border:1px solid #ecd4dc;border-radius:12px;background:#fff}
 @media(max-width:900px){.grade{grid-template-columns:repeat(2,1fr)}.painel{grid-template-columns:1fr}}
-@media(max-width:600px){header{flex-direction:column;align-items:flex-start;gap:12px}.grade{grid-template-columns:1fr}.hero{margin:18px;padding:30px 20px}.secao{padding:30px 18px}.btn{width:100%}}
+@media(max-width:600px){header{flex-direction:column;align-items:flex-start;gap:12px}.grade{grid-template-columns:1fr}.hero{margin:18px;padding:30px 20px}.secao{padding:30px 18px}.btn{width:100%}form{gap:18px}input,textarea{padding:13px}.item{align-items:flex-start;gap:14px}.etapas{gap:6px}.etapa{font-size:.86rem;padding:7px 10px}}
 </style>
 </head>
 <body>
@@ -28,7 +28,7 @@ form{display:grid;gap:14px}label{font-weight:700;display:grid;gap:6px}input,text
 <span class="tag">PIT II • UX e Navegação</span>
 <h1>Uma experiência simples, clara e intuitiva.</h1>
 <p>Aplicação baseada nos wireframes e no mapa de navegação desenvolvidos na PIT I.</p>
-<div class="etapas"><span class="etapa ativa">Início</span><span class="etapa">Catálogo</span><span class="etapa">Carrinho</span><span class="etapa">Finalização</span><span class="etapa">Confirmação</span></div>
+<div class="etapas" id="etapas"><span class="etapa ativa">Início</span><span class="etapa">Catálogo</span><span class="etapa">Carrinho</span><span class="etapa">Finalização</span><span class="etapa">Confirmação</span></div>
 </section>
 
 <section class="secao"><span class="tag">Catálogo</span><h2>Escolha seus cupcakes</h2><div id="grade" class="grade"></div></section>
@@ -41,7 +41,7 @@ form{display:grid;gap:14px}label{font-weight:700;display:grid;gap:6px}input,text
 <label>Telefone<input id="telefone" required></label>
 <label>Endereço<textarea id="endereco" required></textarea></label>
 <button class="btn" type="submit">Finalizar pedido</button>
-<p id="msg" class="msg"></p>
+<p id="msg" class="msg"></p><div id="confirmacao"></div>
 </form>
 </section>
 </main>
@@ -54,15 +54,15 @@ const produtos=[
 {id:4,n:'Red Velvet',d:'Massa red velvet com cream cheese.',p:11,ico:'❤️'}
 ];
 const carrinho=new Map();
-const grade=document.getElementById('grade'),qtd=document.getElementById('qtd'),resumo=document.getElementById('resumo'),msg=document.getElementById('msg');
+const grade=document.getElementById('grade'),qtd=document.getElementById('qtd'),resumo=document.getElementById('resumo'),msg=document.getElementById('msg'),confirmacao=document.getElementById('confirmacao'),etapas=[...document.querySelectorAll('#etapas .etapa')];
 
 function render(){grade.innerHTML=produtos.map(p=>`<article class="card"><div class="foto">${p.ico}</div><h3>${p.n}</h3><p>${p.d}</p><div class="linha"><strong>R$ ${p.p.toFixed(2).replace('.',',')}</strong><button class="btn" onclick="add(${p.id})">Adicionar</button></div></article>`).join('')}
 
-function add(id){const p=produtos.find(x=>x.id===id),item=carrinho.get(id)||{...p,q:0};item.q++;carrinho.set(id,item);atualizar();msg.textContent=`${p.n} adicionado ao carrinho.`}
+function marcarEtapa(indice){etapas.forEach((e,i)=>e.classList.toggle('ativa',i===indice))}function mensagem(texto,tipo='ok'){msg.className=`msg ${tipo}`;msg.textContent=texto}function add(id){const p=produtos.find(x=>x.id===id),item=carrinho.get(id)||{...p,q:0};item.q++;carrinho.set(id,item);atualizar();mensagem(`${p.n} foi adicionado ao carrinho com sucesso.`,'ok');marcarEtapa(2)}
 
 function atualizar(){let total=0,qt=0,linhas=[];carrinho.forEach(x=>{qt+=x.q;total+=x.p*x.q;linhas.push(`<div class="item"><span>${x.n} x${x.q}</span><strong>R$ ${(x.p*x.q).toFixed(2).replace('.',',')}</strong></div>`)});qtd.textContent=qt;resumo.innerHTML=carrinho.size?`${linhas.join('')}<hr><div class="item"><strong>Total</strong><strong>R$ ${total.toFixed(2).replace('.',',')}</strong></div>`:'Nenhum produto adicionado.'}
 
-document.getElementById('form').onsubmit=e=>{e.preventDefault();if(!carrinho.size){msg.textContent='Adicione ao menos um produto antes de finalizar.';return}const pedido=Math.floor(1000+Math.random()*9000);msg.textContent=`Pedido #${pedido} finalizado com sucesso. Obrigada, ${nome.value}!`;carrinho.clear();atualizar();e.target.reset()}
+document.getElementById('form').onsubmit=e=>{e.preventDefault();const faltando=[];if(!nome.value.trim())faltando.push('nome');if(!telefone.value.trim())faltando.push('telefone');if(!endereco.value.trim())faltando.push('endereço');if(!carrinho.size){mensagem('Adicione ao menos um produto antes de finalizar o pedido.','erro');marcarEtapa(2);return}if(faltando.length){mensagem(`Preencha os campos obrigatórios: ${faltando.join(', ')}.`,'erro');marcarEtapa(3);return}const pedido=Math.floor(1000+Math.random()*9000);mensagem(`Pedido #${pedido} finalizado com sucesso.`,'ok');confirmacao.innerHTML=`<div class='confirmacao'><strong>Resumo da confirmação</strong><p>Cliente: ${nome.value.trim()}</p><p>Telefone: ${telefone.value.trim()}</p><p>Endereço: ${endereco.value.trim()}</p><p>Status: Pedido confirmado</p></div>`;marcarEtapa(4);carrinho.clear();atualizar();e.target.reset()}
 render();atualizar();
 </script>
 </body>
